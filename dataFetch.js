@@ -4,9 +4,11 @@ const fs = require('fs');
 
 import('node-fetch').then(fetchModule => {
     const fetch = fetchModule.default;
-    const apiKey = 'demo';
+    // WW7RYB1I1RPMFI1O
+    const apiKey = 'WW7RYB1I1RPMFI1O';
     const fetchURLFirstPart = "https://www.alphavantage.co/query?function=TIME_SERIES_"
-    const fetchURLSecondPart = "&symbol=IBM&apikey="
+    const stockSymbol = 'TSLA';
+    const fetchURLSecondPart = `&symbol=${stockSymbol}&apikey=`
     const fetchURLDaily = fetchURLFirstPart + "DAILY" + fetchURLSecondPart + apiKey;
     const fetchURLWeekly = fetchURLFirstPart + "WEEKLY" + fetchURLSecondPart + apiKey;
     const fetchURLMonthly = fetchURLFirstPart + "MONTHLY" + fetchURLSecondPart + apiKey;
@@ -19,6 +21,10 @@ import('node-fetch').then(fetchModule => {
                 throw new Error('Failed to fetch data');
             }
             const data = await response.json();
+            if (data.information) {
+                console.log('Error:', data.information);
+                return "Error: Invalid Stock Symbol"
+            }
             const formattedData = formatData(data);
             return formattedData;
         } catch (error) {
@@ -40,10 +46,21 @@ import('node-fetch').then(fetchModule => {
 
     async function formater() {
         const DailyData = await fetchData(fetchURLDaily);
+        if (DailyData === "Error: Invalid Stock Symbol") {
+            return;
+        }
         const WeeklyData = await fetchData(fetchURLWeekly);
+        if (WeeklyData === "Error: Invalid Stock Symbol") {
+            return;
+        }
         const MonthlyData = await fetchData(fetchURLMonthly);
+        if (MonthlyData === "Error: Invalid Stock Symbol") {
+            return;
+        }
         const oldestDailyDate = DailyData.data[DailyData.data.length - 1].date;
-
+        if (DailyData === "Error: Invalid Stock Symbol") {
+            return;
+        }
         console.log('Oldest Daily Data:', oldestDailyDate);
         const filteredWeeklyData = WeeklyData.data.filter(item => item.date < oldestDailyDate);
         // Combine all data
