@@ -14,7 +14,7 @@ function formatDate(date) {
     return `${year}-${month}-${day}`;
 }
 
-let stockSymbol = 'ZWS';
+let stockSymbol = 'TSLA';
 stockSymbol = stockSymbol.trim();
 const apiKey = env.apiKey;
 const today = new Date("2024-03-20");
@@ -63,7 +63,8 @@ async function formater() {
 
 function writeToFile(data) {
     const jsonData = JSON.stringify(data, null, 2);
-    fs.writeFileSync('data.json', jsonData);
+    const filename = stockSymbol + '.json';
+    fs.writeFileSync(filename, jsonData);
     console.log('Data written to data.json file.');
 }
 
