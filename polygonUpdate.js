@@ -1,9 +1,8 @@
 const fs = require('fs');
 const env = require('./env.json');
+const oldData = require('./data.json');
 
 
-
-// eMRUORcOpMRg8hv3YqjSxCUu3CHYnZKH
 // https://api.polygon.io/v2/aggs/ticker/AAPL/range/1/day/2022-01-09/2024-01-09?adjusted=true&sort=asc&limit=120&apiKey=
 
 function formatDate(date) {
@@ -13,16 +12,20 @@ function formatDate(date) {
     const day = String(newDate.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
 }
-
-let stockSymbol = 'ZWS';
+let stockSymbol = 'ZWS    ';
 stockSymbol = stockSymbol.trim();
+const sortedOldData = oldData[stockSymbol].sort((a, b) => {
+    return new Date(a.date) - new Date(b.date);
+});
+
+console.log(sortedOldData.slice(-1)[0].date);
 const apiKey = env.apiKey;
-const today = new Date("2024-03-20");
+const today = new Date();
 const formatedToday = formatDate(today);
 const twoYearsAgo = new Date(today.getFullYear() - 2, today.getMonth(), today.getDate());
 const formatedTwoYearsAgo = formatDate(twoYearsAgo);
 const fetchURL = `https://api.polygon.io/v2/aggs/ticker/${stockSymbol.trim()}/range/1/day/${formatedTwoYearsAgo.trim()}/${formatedToday.trim()}?adjusted=true&sort=asc&limit=2000&apiKey=${apiKey.trim()}`
-
+console.log(fetchURL);
 
 async function fetchData(url) {
     try {
@@ -53,17 +56,31 @@ function formatData(data, stockSymbol) {
     }
     return { [stockSymbol]: formattedData };
 }
+function mergeData(oldData, newData) {
+
+    const newestDate = new Date(oldData.slice(-1)[0].date);
+    const sortedNewData = newData[stockSymbol].sort((a, b) => {
+        return new Date(a.date) - new Date(b.date);
+    });
+    const filteredNewData = Array.isArray(sortedNewData) ? sortedNewData.filter(entry => new Date(entry.date) > newestDate) : [];
+    console.log(filteredNewData);
+    const mergedData = oldData.concat(filteredNewData);
+
+    return mergedData;
+}
+
 
 async function formater() {
     const data = await fetchData(fetchURL);
-
-    writeToFile(data);
+    const updatedData = mergeData(sortedOldData, data);
+    const finalData = { [stockSymbol]: updatedData };
+    writeToFile(finalData);
 
 }
 
 function writeToFile(data) {
     const jsonData = JSON.stringify(data, null, 2);
-    fs.writeFileSync('data.json', jsonData);
+    fs.writeFileSync('updated.json', jsonData);
     console.log('Data written to data.json file.');
 }
 
